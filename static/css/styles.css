@@ -1,0 +1,22 @@
+body {
+    background-color: #A9A9A9;
+}
+
+h1 {
+    color: blue;
+}
+
+p {
+    color: red;
+}
+
+footer {
+    display: block;
+}
+
+neattitle {
+    font-family: Georgia,serif;
+    color: rgb(230, 209, 64);
+    font-variant: small-caps;
+    text-shadow: 1px 1px rgb(0, 0, 0), 1px 1px 0.1px rgb(0, 0, 0);
+}
