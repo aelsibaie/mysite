@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8"/>
+    <title>aelsi.ddns.us</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+
+<body>
+    <h1>Welcome to Amir's experimental website</h1>
+    
+    {% if admin %}
+    
+    <h2>Welcome to the ADMIN panel</h2>
+    
+    {{admin_data}}
+    
+    {% else %}
+    
+    You are not an administrator.
+    
+    {% endif %}
+    
+
+</body>
+
+<footer>
+<a href="/">Back</a> 
+</footer>
+
+</html>

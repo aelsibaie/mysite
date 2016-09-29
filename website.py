@@ -1,28 +1,59 @@
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, redirect
 app = Flask(__name__, static_url_path='/static')
 
+import sqlite_db
 
 from datetime import datetime
 from os import urandom
 
 
-import sqlite_db
-        
-
-@app.route('/')
-def index():
-    time = datetime.now()
-    time = time.strftime("%c") # Locale’s appropriate date and time representation
-    return render_template('index.html', time=time)
-
-@app.route('/auth')
-def auth():
+def check_auth():
     username = request.cookies.get('username')
     id = request.cookies.get('id')
     if sqlite_db.check_session(username, id) == True:
-        return "Authenticated"
+        return username
     else:
-        return "Denied access"
+        return False
+
+def check_admin():
+    username = request.cookies.get('username')
+    id = request.cookies.get('id')
+    if sqlite_db.check_admin_db(username, id) == True:
+        return username
+    else:
+        return False
+
+@app.route('/')
+def index():
+    auth = check_auth()
+    if auth != False:
+        auth_data = sqlite_db.get_users()
+    else:
+        auth_data = None
+    time = datetime.now()
+    time = time.strftime("%c") # Locale’s appropriate date and time representation
+    return render_template('index.html', time=time, auth=auth, auth_data=auth_data)
+
+
+@app.route('/admin')
+def admin():
+    admin = check_admin()
+    if admin != False:
+        admin_data = sqlite_db.get_users()
+    else:
+        admin_data = None
+
+    return render_template('admin.html', admin=admin, admin_data=admin_data)
+
+
+@app.route('/logoff', methods=['POST'])
+def logoff():
+    username = request.cookies.get('username')
+    auth = check_auth()
+    if auth != False:
+        sqlite_db.logoff(username)
+        return redirect('/')
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -32,14 +63,15 @@ def login():
     
     login_request = sqlite_db.login(username, password)
     
-    if type(login_request) != str:
-        resp = make_response("Log in successful")
+    if login_request != False:
+        print(login_request)
+        #resp = index()
+        resp = make_response(redirect('/'))
         resp.set_cookie('username', username)
         resp.set_cookie('id', login_request)
         return resp
-        #return "Log in successful"
     else:
-        return login_request
+        return render_template('error.html', problems=["Username of password incorrect"])
 
 
 @app.route('/register', methods=['POST'])
@@ -50,12 +82,9 @@ def register():
     email = post_data['email']
     problems = sqlite_db.register(username, email, password)
     if problems == []:
-        return "Registration successful"
+        return render_template('registered.html', username=username, email=email)
     else:
-        return str(problems)
-
-# set the secret key.  keep this really secret:
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+        return render_template('error.html', problems=problems)
 
 
 if __name__ == '__main__':

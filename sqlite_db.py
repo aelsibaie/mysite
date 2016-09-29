@@ -6,7 +6,7 @@ import base64
 import os
 
 import sqlite3
-connection = sqlite3.connect('users.sqlite3', check_same_thread = False)
+connection = sqlite3.connect('db.sqlite3', check_same_thread = False)
 cursor = connection.cursor()
 
 # First, let's create the DB if it doesn't exist
@@ -15,34 +15,75 @@ cursor.execute('''CREATE TABLE if not exists users (
     email           TEXT,
     salt            BLOB,
     key             BLOB,
-    session_id      BLOB,
+    session_id      TEXT,
     creationtime    DATETIME,
     logintime       DATETIME,
     admin           BOOLEAN,
     validated       BOOLEAN)''')
 
+cursor.execute('''CREATE TABLE if not exists blogs (
+    blog_id         INTEGER     PRIMARY KEY,
+    author          TEXT,
+    content         TEXT,
+    creationtime    DATETIME)''')
+
 def check_session(username, id):
     cursor.execute("SELECT session_id FROM users WHERE username = ?", (username,))
-    db_id = cursor.fetchone()[0]
-    print(base64.b64decode(id))
-    print(base64.b64decode(db_id))
-    if base64.b64decode(id) == base64.b64decode(db_id[0]):
-        return True
-    return False
-    
+    try:
+        db_id = cursor.fetchone()[0]
+        if id == db_id:
+            return True
+        else:
+            return False
+    except TypeError:
+        return False
 
+def check_admin_db(username, id):
+    cursor.execute("SELECT session_id, admin FROM users WHERE username = ?", (username,))
+    try:
+        db_id, admin = cursor.fetchone()
+        print(db_id)
+        print(admin)
+        if id == db_id:
+            if admin == True:
+                return True
+        else:
+            return False
+    except TypeError as err:
+        return False
+
+def get_users():
+    cursor.execute("SELECT username FROM users")
+    users = cursor.fetchall()
+    users_clean = []
+    for dirty_user in users:
+        users_clean.append(dirty_user[0])
+    return users_clean
+
+def logoff(username):
+    cursor.execute("UPDATE users SET session_id = NULL WHERE username = ?", (username,))
+    connection.commit()
+    
 def __validate_input(username, user_email, password):
+    MAX_PASSWORD = 100
+    MIN_PASSWORD = 8
+    MAX_USERNAME = 30
+    MIN_USERNAME = 4
     problems = []
     temp_email = email.utils.parseaddr(user_email)
     if temp_email == ('', ''):
         problems.append("Invalid email address")
-    if len(password) > 100:
+    cursor.execute("SELECT email FROM users WHERE email = ?", (user_email,))
+    email_conflicts = cursor.fetchall()
+    if email_conflicts != []:
+        problems.append("Email address already in use")
+    if len(password) > MAX_PASSWORD:
         problems.append("Password must be less than 100 characters")
-    if len(password) < 8:
+    if len(password) < MIN_PASSWORD:
         problems.append("Password must be greater than 8 characters")
-    if len(username) > 30:
+    if len(username) > MAX_USERNAME:
         problems.append("Username must be less than 30 characters")
-    if len(username) < 4:
+    if len(username) < MIN_USERNAME:
         problems.append("Username must be greater than 4 characters")
     return problems
 
@@ -54,7 +95,7 @@ def register(username, user_email, password):
     key = __get_key(password, salt)
     creationtime = time.time()
     try:
-        cursor.execute("INSERT INTO users (username,email,salt,key,creationtime,admin,validated) VALUES (?,?,?,?,?,?,?)", (
+        cursor.execute('''INSERT INTO users (username, email, salt, key, creationtime, admin, validated) VALUES (?, ?, ?, ?, ?, ?, ?)''', (
             username,
             user_email,
             salt,
@@ -67,7 +108,7 @@ def register(username, user_email, password):
     except sqlite3.IntegrityError as error:
         problems.append("Username already taken")
     return problems
-        
+
 def login(username, password):
     try:
         cursor.execute("SELECT salt, key FROM users WHERE username = ?", (username,))
@@ -75,14 +116,14 @@ def login(username, password):
         user_key = __get_key(password, salt)
         if db_key == user_key:
             logintime = time.time()
-            session_id = base64.b64encode(os.urandom(64))
+            session_id = base64.b64encode(os.urandom(64)).decode('utf-8')
             cursor.execute("UPDATE users SET logintime = ?, session_id = ?  WHERE username = ?", (logintime,session_id,username))
             connection.commit()
             return session_id
         else:
-            return "Incorrect password"
+            return False # Incorrect password
     except TypeError as error:
-        return "User not found"
+        return False # User not found
 
 def __get_key(password, salt):
     # As of 2013, at least 100,000 iterations of SHA-256 are suggested

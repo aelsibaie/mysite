@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8"/>
+    <title>aelsi.ddns.us</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+
+<body>
+<table>
+<thead>
+    <tr>
+    <th>Error(s):</th>
+    </tr>
+</thead>
+<tbody>
+    {% for problem in problems %}
+    <tr>
+    <th>{{ problem }}</th>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+
+</body>
+
+<footer>
+<a href="/">Back</a> 
+</footer>
+
+</html>
