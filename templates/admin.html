@@ -10,7 +10,7 @@
 <body>
     <h1>Welcome to Amir's experimental website</h1>
     
-    {% if admin %}
+    {% if auth['rank'] == 'ADMIN' %}
     
     <h2>Welcome to the ADMIN panel</h2>
     

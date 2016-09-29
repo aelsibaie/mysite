@@ -28,29 +28,28 @@ cursor.execute('''CREATE TABLE if not exists blogs (
     creationtime    DATETIME)''')
 
 def check_session(username, id):
-    cursor.execute("SELECT session_id FROM users WHERE username = ?", (username,))
+    SESSION_EXPIRATION_TIME = 30 # One day in seconds 86400
+    cursor.execute("SELECT session_id, admin, logintime FROM users WHERE username = ?", (username,))
     try:
-        db_id = cursor.fetchone()[0]
-        if id == db_id:
-            return True
-        else:
+        db_id, admin, logintime = cursor.fetchone()
+        if db_id == None:
             return False
-    except TypeError:
-        return False
-
-def check_admin_db(username, id):
-    cursor.execute("SELECT session_id, admin FROM users WHERE username = ?", (username,))
-    try:
-        db_id, admin = cursor.fetchone()
-        print(db_id)
-        print(admin)
+        now = time.time()
+        session_duration = now - logintime
+        if session_duration > SESSION_EXPIRATION_TIME:
+            cursor.execute("UPDATE users SET session_id = NULL WHERE username = ?", (username,))
+            connection.commit()
+            return False
         if id == db_id:
             if admin == True:
-                return True
+                return "ADMIN"
+            else:
+                return "AUTH"
         else:
-            return False
+            return False # Bad/expired user ID
     except TypeError as err:
-        return False
+        print(err)
+        return False # Username not found
 
 def get_users():
     cursor.execute("SELECT username FROM users")

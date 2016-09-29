@@ -1,25 +1,22 @@
 from flask import Flask, render_template, request, make_response, redirect
 app = Flask(__name__, static_url_path='/static')
 
+# Change this and keep it secret
+# app.secret_key = 'vzHUWR5FZnwMG8wBzFgCGJRTqButzArqFtUbQ5vLsUV5bBf3'
+
 import sqlite_db
 
 from datetime import datetime
-from os import urandom
 
 
 def check_auth():
     username = request.cookies.get('username')
     id = request.cookies.get('id')
-    if sqlite_db.check_session(username, id) == True:
-        return username
-    else:
-        return False
-
-def check_admin():
-    username = request.cookies.get('username')
-    id = request.cookies.get('id')
-    if sqlite_db.check_admin_db(username, id) == True:
-        return username
+    auth = sqlite_db.check_session(username, id)
+    if auth == "ADMIN":
+        return {"username":username, "rank":auth}
+    elif auth == "AUTH":
+        return {"username":username, "rank":auth}
     else:
         return False
 
@@ -37,21 +34,21 @@ def index():
 
 @app.route('/admin')
 def admin():
-    admin = check_admin()
-    if admin != False:
-        admin_data = sqlite_db.get_users()
+    auth = check_auth()
+    if auth != False:
+        if auth['rank'] == "ADMIN":
+            admin_data = sqlite_db.get_users()
     else:
         admin_data = None
 
-    return render_template('admin.html', admin=admin, admin_data=admin_data)
+    return render_template('admin.html', auth=auth, admin_data=admin_data)
 
 
 @app.route('/logoff', methods=['POST'])
 def logoff():
-    username = request.cookies.get('username')
     auth = check_auth()
     if auth != False:
-        sqlite_db.logoff(username)
+        sqlite_db.logoff(auth['username'])
         return redirect('/')
 
 
@@ -60,11 +57,8 @@ def login():
     post_data = request.form
     username = post_data['username']
     password = str.encode(post_data['password']) # Convert plaintext to bytes
-    
     login_request = sqlite_db.login(username, password)
-    
     if login_request != False:
-        print(login_request)
         #resp = index()
         resp = make_response(redirect('/'))
         resp.set_cookie('username', username)
