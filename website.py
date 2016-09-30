@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, make_response, redirect
+from flask import Flask, render_template, request, make_response, redirect, session
 app = Flask(__name__, static_url_path='/static')
 
 # Change this and keep it secret
-# app.secret_key = 'vzHUWR5FZnwMG8wBzFgCGJRTqButzArqFtUbQ5vLsUV5bBf3'
+app.secret_key = 'vzHUWR5FZnwMG8wBzFgCGJRTqButzArqFtUbQ5vLsUV5bBf3'
 
 import sqlite_db
 
@@ -10,15 +10,16 @@ from datetime import datetime
 
 
 def check_auth():
-    username = request.cookies.get('username')
-    id = request.cookies.get('id')
+    if 'username' in session:
+        username = session['username']
+        id = session['id']
+    else:
+        return False
     auth = sqlite_db.check_session(username, id)
     if auth == "ADMIN":
         return {"username":username, "rank":auth}
     elif auth == "AUTH":
         return {"username":username, "rank":auth}
-    else:
-        return False
 
 @app.route('/')
 def index():
@@ -48,6 +49,7 @@ def admin():
 def logoff():
     auth = check_auth()
     if auth != False:
+        session.clear()
         sqlite_db.logoff(auth['username'])
         return redirect('/')
 
@@ -57,13 +59,13 @@ def login():
     post_data = request.form
     username = post_data['username']
     password = str.encode(post_data['password']) # Convert plaintext to bytes
-    login_request = sqlite_db.login(username, password)
-    if login_request != False:
-        #resp = index()
-        resp = make_response(redirect('/'))
-        resp.set_cookie('username', username)
-        resp.set_cookie('id', login_request)
-        return resp
+    session_id = sqlite_db.login(username, password)
+    if session_id != False:
+        session['username'] = username
+        session['id'] = session_id
+        if 'remember' in post_data:
+            session.permanent = True
+        return redirect('/')
     else:
         return render_template('error.html', problems=["Username of password incorrect"])
 
