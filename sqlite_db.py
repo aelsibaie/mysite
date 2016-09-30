@@ -29,26 +29,19 @@ cursor.execute('''CREATE TABLE if not exists blogs (
 
 
 def check_session(username, id):
-    SESSION_EXPIRATION_TIME = 86400 # One day in seconds 86400
-    cursor.execute("SELECT session_id, admin, logintime FROM users WHERE username = ?", (username,))
+    cursor.execute("SELECT session_id, admin FROM users WHERE username = ?", (username,))
     try:
-        db_id, admin, logintime = cursor.fetchone()
+        db_id, admin = cursor.fetchone()
         if db_id == None:
             return False
-        now = time.time()
-        session_duration = now - logintime
-        if session_duration > SESSION_EXPIRATION_TIME:
-            cursor.execute("UPDATE users SET session_id = NULL WHERE username = ?", (username,))
-            connection.commit()
-            return False
-        if id == db_id:
+        elif db_id == id:
             if admin == True:
                 return "ADMIN"
             else:
                 return "AUTH"
         else:
-            return False # Bad/expired user ID
-    except TypeError as err:
+            return False # Bad user ID
+    except TypeError:
         return False # Username not found
 
 
@@ -111,10 +104,6 @@ def logoff(username):
 
 
 def __validate_input(username, user_email, password):
-    MAX_PASSWORD = 100
-    MIN_PASSWORD = 8
-    MAX_USERNAME = 30
-    MIN_USERNAME = 4
     problems = []
     if username.isalnum() == False:
         problems.append("Username must be alphanumeric")
@@ -129,13 +118,13 @@ def __validate_input(username, user_email, password):
     email_conflicts = cursor.fetchall()
     if email_conflicts != []:
         problems.append("Email address already in use")
-    if len(password) > MAX_PASSWORD:
+    if len(password) > 128:
         problems.append("Password must be less than 100 characters")
-    if len(password) < MIN_PASSWORD:
+    if len(password) < 8:
         problems.append("Password must be greater than 8 characters")
-    if len(username) > MAX_USERNAME:
+    if len(username) > 32:
         problems.append("Username must be less than 30 characters")
-    if len(username) < MIN_USERNAME:
+    if len(username) < 4:
         problems.append("Username must be greater than 4 characters")
     return problems
 
