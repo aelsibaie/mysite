@@ -28,7 +28,7 @@ cursor.execute('''CREATE TABLE if not exists blogs (
     creationtime    DATETIME)''')
 
 
-def check_session(username, id):
+def check_id(username, id):
     cursor.execute("SELECT session_id, admin FROM users WHERE username = ?", (username,))
     try:
         db_id, admin = cursor.fetchone()
@@ -57,11 +57,19 @@ def get_users():
             user[3] = "Never"
     return users_list
 
+def get_num_users():
+    cursor.execute("SELECT count(*) from users")
+    count = cursor.fetchone()[0]
+    return count
 
 def register(username, user_email, password):
     problems = __validate_input(username, user_email, password)
     if problems != []:
         return problems
+    if get_num_users() == 0:
+        admin = True # Set first user as admin
+    else:
+        admin = False
     salt = os.urandom(16) # Salt should be about 16 or more bytes
     key = __get_key(password, salt)
     creationtime = time.time()
@@ -72,7 +80,7 @@ def register(username, user_email, password):
             salt,
             key,
             creationtime,
-            False,
+            admin,
             False)
         )
         connection.commit()
@@ -105,25 +113,33 @@ def logoff(username):
 
 def __validate_input(username, user_email, password):
     problems = []
+    # Alphanumeric check
     if username.isalnum() == False:
         problems.append("Username must be alphanumeric")
+    # Banned password check
     with open('banned_passwords.txt', 'r') as file:
         banned_passwords = file.read()
         if password.decode('utf-8') in banned_passwords:
             problems.append("Password too common")
+    # Malformed email
     temp_email = email.utils.parseaddr(user_email)
     if temp_email == ('', ''):
         problems.append("Invalid email address")
+    # Duplicate email
     cursor.execute("SELECT email FROM users WHERE email = ?", (user_email,))
     email_conflicts = cursor.fetchall()
     if email_conflicts != []:
         problems.append("Email address already in use")
+    # Password upper limit
     if len(password) > 128:
         problems.append("Password must be less than 100 characters")
+    # Password lower limit
     if len(password) < 8:
         problems.append("Password must be greater than 8 characters")
+    # Username upper limit
     if len(username) > 32:
         problems.append("Username must be less than 30 characters")
+    # Username lower limit
     if len(username) < 4:
         problems.append("Username must be greater than 4 characters")
     return problems

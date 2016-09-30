@@ -9,18 +9,6 @@ import sqlite_db
 from datetime import datetime, timedelta
 
 
-def check_auth():
-    if 'username' in session:
-        username = session['username']
-        id = session['id']
-    else:
-        return False
-    auth = sqlite_db.check_session(username, id)
-    if auth == "ADMIN":
-        return {"username":username, "rank":auth}
-    elif auth == "AUTH":
-        return {"username":username, "rank":auth}
-
 @app.route('/')
 def index():
     auth = check_auth()
@@ -84,7 +72,19 @@ def register():
         return render_template('error.html', problems=problems)
 
 
+def check_auth():
+    if 'username' in session:
+        username = session['username']
+        id = session['id']
+    else:
+        return False
+    auth = sqlite_db.check_id(username, id)
+    if auth == "ADMIN":
+        return {"username":username, "rank":auth}
+    elif auth == "AUTH":
+        return {"username":username, "rank":auth}
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True, threaded=True)
-    print("Closing SQLite connection")
     sqlite_db.connection.close
