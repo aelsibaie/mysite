@@ -14,7 +14,38 @@
     
     <h2>Welcome to the ADMIN panel</h2>
     
-    {{admin_data}}
+    <h3>List of registered users</h3>
+    <table border=1>
+    <thead>
+        <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Account created</th>
+        <th>Last seen</th>
+        <th>Validated</th>
+        <th>Admin</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in admin_data['users'] %}
+        <tr>
+            {% for attr in user %}
+                <th>{{ attr }}</th>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     {% else %}
     

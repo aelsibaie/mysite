@@ -1,15 +1,15 @@
 import time
 import email
-
 import hashlib
 import base64
 import os
-
+import datetime
 import sqlite3
+
 connection = sqlite3.connect('db.sqlite3', check_same_thread = False)
 cursor = connection.cursor()
 
-# First, let's create the DB if it doesn't exist
+# Create the DB if it doesn't exist
 cursor.execute('''CREATE TABLE if not exists users (
     username        TEXT        PRIMARY KEY,
     email           TEXT,
@@ -27,8 +27,9 @@ cursor.execute('''CREATE TABLE if not exists blogs (
     content         TEXT,
     creationtime    DATETIME)''')
 
+
 def check_session(username, id):
-    SESSION_EXPIRATION_TIME = 30 # One day in seconds 86400
+    SESSION_EXPIRATION_TIME = 86400 # One day in seconds 86400
     cursor.execute("SELECT session_id, admin, logintime FROM users WHERE username = ?", (username,))
     try:
         db_id, admin, logintime = cursor.fetchone()
@@ -48,43 +49,21 @@ def check_session(username, id):
         else:
             return False # Bad/expired user ID
     except TypeError as err:
-        print(err)
         return False # Username not found
 
-def get_users():
-    cursor.execute("SELECT username FROM users")
-    users = cursor.fetchall()
-    users_clean = []
-    for dirty_user in users:
-        users_clean.append(dirty_user[0])
-    return users_clean
 
-def logoff(username):
-    cursor.execute("UPDATE users SET session_id = NULL WHERE username = ?", (username,))
-    connection.commit()
-    
-def __validate_input(username, user_email, password):
-    MAX_PASSWORD = 100
-    MIN_PASSWORD = 8
-    MAX_USERNAME = 30
-    MIN_USERNAME = 4
-    problems = []
-    temp_email = email.utils.parseaddr(user_email)
-    if temp_email == ('', ''):
-        problems.append("Invalid email address")
-    cursor.execute("SELECT email FROM users WHERE email = ?", (user_email,))
-    email_conflicts = cursor.fetchall()
-    if email_conflicts != []:
-        problems.append("Email address already in use")
-    if len(password) > MAX_PASSWORD:
-        problems.append("Password must be less than 100 characters")
-    if len(password) < MIN_PASSWORD:
-        problems.append("Password must be greater than 8 characters")
-    if len(username) > MAX_USERNAME:
-        problems.append("Username must be less than 30 characters")
-    if len(username) < MIN_USERNAME:
-        problems.append("Username must be greater than 4 characters")
-    return problems
+def get_users():
+    cursor.execute("SELECT username, email, creationtime, logintime, validated, admin FROM users")
+    users = cursor.fetchall()
+    users_list = [list(user) for user in users]
+    for user in users_list:
+        user[2] = datetime.datetime.fromtimestamp(float(user[2])).strftime('%c')# creationtime
+        try:
+            user[3] = datetime.datetime.fromtimestamp(float(user[3])).strftime('%c')# logintime
+        except TypeError:
+            user[3] = "Never"
+    return users_list
+
 
 def register(username, user_email, password):
     problems = __validate_input(username, user_email, password)
@@ -108,6 +87,7 @@ def register(username, user_email, password):
         problems.append("Username already taken")
     return problems
 
+
 def login(username, password):
     try:
         cursor.execute("SELECT salt, key FROM users WHERE username = ?", (username,))
@@ -124,7 +104,42 @@ def login(username, password):
     except TypeError as error:
         return False # User not found
 
+
+def logoff(username):
+    cursor.execute("UPDATE users SET session_id = NULL WHERE username = ?", (username,))
+    connection.commit()
+
+
+def __validate_input(username, user_email, password):
+    MAX_PASSWORD = 100
+    MIN_PASSWORD = 8
+    MAX_USERNAME = 30
+    MIN_USERNAME = 4
+    problems = []
+    if username.isalnum() == False:
+        problems.append("Username must be alphanumeric")
+    with open('banned_passwords.txt', 'r') as file:
+        banned_passwords = file.read()
+        if password.decode('utf-8') in banned_passwords:
+            problems.append("Password too common")
+    temp_email = email.utils.parseaddr(user_email)
+    if temp_email == ('', ''):
+        problems.append("Invalid email address")
+    cursor.execute("SELECT email FROM users WHERE email = ?", (user_email,))
+    email_conflicts = cursor.fetchall()
+    if email_conflicts != []:
+        problems.append("Email address already in use")
+    if len(password) > MAX_PASSWORD:
+        problems.append("Password must be less than 100 characters")
+    if len(password) < MIN_PASSWORD:
+        problems.append("Password must be greater than 8 characters")
+    if len(username) > MAX_USERNAME:
+        problems.append("Username must be less than 30 characters")
+    if len(username) < MIN_USERNAME:
+        problems.append("Username must be greater than 4 characters")
+    return problems
+
+
 def __get_key(password, salt):
-    # As of 2013, at least 100,000 iterations of SHA-256 are suggested
-    key = hashlib.pbkdf2_hmac('sha256', password, salt, 100000)
+    key = hashlib.pbkdf2_hmac('sha512', password, salt, 100000)
     return key

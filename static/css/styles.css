@@ -1,22 +1,26 @@
-body {
-    background-color: #A9A9A9;
+.flex-container {
+    display: -webkit-flex;
+    display: flex;  
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
+    text-align: center;
 }
 
-h1 {
-    color: blue;
+.flex-container > * {
+    padding: 15px;
+    -webkit-flex: 1 100%;
+    flex: 1 100%;
 }
 
-p {
-    color: red;
+.article {
+    text-align: left;
 }
 
-footer {
-    display: block;
-}
 
-neattitle {
-    font-family: Georgia,serif;
-    color: rgb(230, 209, 64);
-    font-variant: small-caps;
-    text-shadow: 1px 1px rgb(0, 0, 0), 1px 1px 0.1px rgb(0, 0, 0);
-}
+
+header {background: black;color:white;}
+footer {background: #aaa;color:white;}
+
+.nav {text-align:left;-webkit-flex: 1 auto;flex:1 auto;-webkit-order:1;order:1;}
+.article {-webkit-flex:5 0px;flex:5 0px;-webkit-order:2;order:2;}
+footer {-webkit-order:3;order:3;}

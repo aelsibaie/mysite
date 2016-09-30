@@ -6,7 +6,7 @@ app = Flask(__name__, static_url_path='/static')
 
 import sqlite_db
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def check_auth():
@@ -37,7 +37,8 @@ def admin():
     auth = check_auth()
     if auth != False:
         if auth['rank'] == "ADMIN":
-            admin_data = sqlite_db.get_users()
+            admin_data = {}
+            admin_data["users"] = sqlite_db.get_users()
     else:
         admin_data = None
 
@@ -59,11 +60,12 @@ def login():
     password = str.encode(post_data['password']) # Convert plaintext to bytes
     login_request = sqlite_db.login(username, password)
     if login_request != False:
-        #resp = index()
-        resp = make_response(redirect('/'))
-        resp.set_cookie('username', username)
-        resp.set_cookie('id', login_request)
-        return resp
+        expire_date = datetime.now()
+        expire_date = expire_date + timedelta(days=1)
+        response = make_response(redirect('/')) 
+        response.set_cookie('username', username, expires=expire_date)
+        response.set_cookie('id', login_request, expires=expire_date)
+        return response
     else:
         return render_template('error.html', problems=["Username of password incorrect"])
 

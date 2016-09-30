@@ -8,44 +8,53 @@
 </head>
 
 <body>
-    <h1>Welcome to Amir's experimental website</h1>
-    
-    {% if auth['rank'] == 'ADMIN' %}
-        <a href="/admin">Administration</a> 
-    {% endif %}
-    
-    {% if auth %}
+<div class="flex-container">
+    <header>
+        <h1 class="neattitle">Welcome to Amir's experimental website</h1>
+    </header>
 
-        <h2>Welcome {{auth['username']}}, you're logged in!</h2>
+    <article class="article">
+        <p>Here is a paragraph</p>
+        <p>And another</p>
+        {% if auth %}
+            <h2>Welcome {{auth['username']}}, you're logged in!</h2>
+            <p>That is all I have for you now.</p>
+        {% endif %}
+    </article>
 
-        <p>That is all I have for you now.</p>
-
-        <form action="logoff" method="post">
-            <input type="submit" value="Log off">
-        </form>
-    
-    {% else %}
-  
-        <form action="login" method="post">
-            Username:
-            <input type="text" name="username" required>
-            Password:
-            <input type="password" name="password" required>
-            <input type="submit" value="Log in">
-        </form>
+    <nav class="nav">
+        {% if auth['rank'] == 'ADMIN' %}
+            <a href="/admin">Administration</a> 
+        {% endif %}
         
-        <form action="register" method="post">
-            Username:
-            <input type="text" name="username" required>
-            Password:
-            <input type="password" name="password" required>
-            Email:
-            <input type="email" name="email" required>
-            <input type="submit" value="Register">
-        </form>
-    
-    {% endif %}
-
+        {% if auth %}
+            <form action="logoff" method="post">
+                <input type="submit" value="Log off">
+            </form>    
+        {% endif %}
+        
+        {% if not auth %}
+            <h4>Log in</h4>
+            <form action="login" method="post">
+                Username:
+                <input type="text" name="username" required><br>
+                Password:
+                <input type="password" name="password" required><br>
+                <input type="submit" value="Log in">
+            </form>
+            <h4>Register</h4>
+            <form action="register" method="post">
+                Username:
+                <input type="text" name="username" required><br>
+                Password:
+                <input type="password" name="password" required><br>
+                Email:
+                <input type="email" name="email" required><br>
+                <input type="submit" value="Register">
+            </form>
+        {% endif %}
+    </nav>
+</div>
 </body>
 
 <footer>
