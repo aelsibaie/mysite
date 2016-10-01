@@ -1,63 +1,73 @@
-<!DOCTYPE html>
 <html lang="en-US">
-
 <head>
     <meta charset="utf-8"/>
     <title>aelsi.ddns.us</title>
     <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
 </head>
 
 <body>
-    <h1>Welcome to Amir's experimental website</h1>
+<div class="flex-container">
     
-    {% if auth['rank'] == 'ADMIN' %}
+    <!--HEADER-->
+    <header>
+        <h1>{{content['title']}}</h1>
+    </header>
+    <!--END HEADER-->
+
+    <!--MAIN-->
+    <article class="article">
+        {% if auth['rank'] == 'ADMIN' %}
     
-    <h2>Welcome to the ADMIN panel</h2>
-    
-    <h3>List of registered users</h3>
-    <table border=1>
-    <thead>
-        <tr>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Account created</th>
-        <th>Last seen</th>
-        <th>Validated</th>
-        <th>Admin</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in admin_data['users'] %}
-        <tr>
-            {% for attr in user %}
-                <th>{{ attr }}</th>
+        <h2>Welcome to the administrator panel</h2>
+        
+        <h3>List of registered users</h3>
+        <table border=1>
+        <thead>
+            <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Account created</th>
+            <th>Last seen</th>
+            <th>Last IP</th>
+            <th>Validated</th>
+            <th>Admin</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in admin_data['users'] %}
+            <tr>
+                {% for attr in user %}
+                    <th>{{ attr }}</th>
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    {% else %}
-    
-    You are not an administrator.
-    
-    {% endif %}
-    
+        </tbody>
+        </table>
+        {% else %}
+        
+        You are not an administrator.
+        
+        {% endif %}
 
+    </article>
+    <!--END MAIN-->
+    
+    <!--NAV-->
+    <nav class="nav">
+        <a href="/">Back</a> 
+
+    </nav>
+    <!--END NAV-->
+    
+    <!--FOOTER-->
+    <footer>
+    Server time: {{ content['time'] }}
+    Render time: {{ content['render_time'] }}
+    </footer>
+    <!--END FOOTER-->
+    
+</div>
 </body>
-
-<footer>
-<a href="/">Back</a> 
-</footer>
 
 </html>

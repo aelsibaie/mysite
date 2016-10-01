@@ -7,22 +7,48 @@ app.secret_key = 'vzHUWR5FZnwMG8wBzFgCGJRTqButzArqFtUbQ5vLsUV5bBf3'
 import sqlite_db
 
 from datetime import datetime, timedelta
+import time
+from decimal import Decimal
 
+
+def universal_content(content, start):
+    content['title'] = "Welcome to Amir's Experimental Website"
+    # Get server time
+    current_time = datetime.now()
+    current_time = time.strftime("%c")
+    content['time'] = current_time
+    # Process render time
+    end = time.clock()
+    render_time = Decimal.from_float(end - start)
+    if render_time <  0.0001:
+        render_time = "< 0.10 ms"
+    else:
+        render_time = str("{0:.2f}".format((render_time * 1000))) + " ms"     
+    content['render_time'] = render_time
+    return content
 
 @app.route('/')
 def index():
+    render_start = time.clock()
+    content = {}
+    # Check if there are any users in the DB
+    content['num_users'] = sqlite_db.get_num_users()
+    
     auth = check_auth()
     if auth != False:
-        auth_data = sqlite_db.get_users()
+        auth_data = None
     else:
         auth_data = None
-    time = datetime.now()
-    time = time.strftime("%c") # Locale’s appropriate date and time representation
-    return render_template('index.html', time=time, auth=auth, auth_data=auth_data)
+    
+    content = universal_content(content, render_start)
+    
+    return render_template('index.html', content=content, auth=auth, auth_data=auth_data)
 
 
 @app.route('/admin')
 def admin():
+    render_start = time.clock()
+    content = {}
     auth = check_auth()
     if auth != False:
         if auth['rank'] == "ADMIN":
@@ -30,8 +56,8 @@ def admin():
             admin_data["users"] = sqlite_db.get_users()
     else:
         admin_data = None
-
-    return render_template('admin.html', auth=auth, admin_data=admin_data)
+    content = universal_content(content, render_start)
+    return render_template('admin.html', content=content, auth=auth, admin_data=admin_data)
 
 
 @app.route('/logoff', methods=['POST'])
@@ -76,9 +102,10 @@ def check_auth():
     if 'username' in session:
         username = session['username']
         id = session['id']
+        ip = request.environ['REMOTE_ADDR']
     else:
         return False
-    auth = sqlite_db.check_id(username, id)
+    auth = sqlite_db.check_id(username, id, ip)
     if auth == "ADMIN":
         return {"username":username, "rank":auth}
     elif auth == "AUTH":

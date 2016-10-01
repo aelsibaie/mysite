@@ -7,6 +7,7 @@ import datetime
 import sqlite3
 
 connection = sqlite3.connect('db.sqlite3', check_same_thread = False)
+#connection = sqlite3.connect(':memory:', check_same_thread = False)
 cursor = connection.cursor()
 
 # Create the DB if it doesn't exist
@@ -17,7 +18,8 @@ cursor.execute('''CREATE TABLE if not exists users (
     key             BLOB,
     session_id      TEXT,
     creationtime    DATETIME,
-    logintime       DATETIME,
+    last_seen       DATETIME,
+    last_ip         TEXT,
     admin           BOOLEAN,
     validated       BOOLEAN)''')
 
@@ -28,13 +30,16 @@ cursor.execute('''CREATE TABLE if not exists blogs (
     creationtime    DATETIME)''')
 
 
-def check_id(username, id):
+def check_id(username, id, ip):
     cursor.execute("SELECT session_id, admin FROM users WHERE username = ?", (username,))
     try:
         db_id, admin = cursor.fetchone()
         if db_id == None:
             return False
         elif db_id == id:
+            last_seen = time.time()
+            cursor.execute("UPDATE users SET last_seen = ?, last_ip = ? WHERE username = ?", (last_seen,ip,username))
+            connection.commit()
             if admin == True:
                 return "ADMIN"
             else:
@@ -46,13 +51,13 @@ def check_id(username, id):
 
 
 def get_users():
-    cursor.execute("SELECT username, email, creationtime, logintime, validated, admin FROM users")
+    cursor.execute("SELECT username, email, creationtime, last_seen, last_ip, validated, admin FROM users")
     users = cursor.fetchall()
     users_list = [list(user) for user in users]
     for user in users_list:
         user[2] = datetime.datetime.fromtimestamp(float(user[2])).strftime('%c')# creationtime
         try:
-            user[3] = datetime.datetime.fromtimestamp(float(user[3])).strftime('%c')# logintime
+            user[3] = datetime.datetime.fromtimestamp(float(user[3])).strftime('%c')# last_seen
         except TypeError:
             user[3] = "Never"
     return users_list
@@ -95,9 +100,9 @@ def login(username, password):
         salt, db_key = cursor.fetchone() 
         user_key = __get_key(password, salt)
         if db_key == user_key:
-            logintime = time.time()
+            last_seen = time.time()
             session_id = base64.b64encode(os.urandom(64)).decode('utf-8')
-            cursor.execute("UPDATE users SET logintime = ?, session_id = ?  WHERE username = ?", (logintime,session_id,username))
+            cursor.execute("UPDATE users SET last_seen = ?, session_id = ?  WHERE username = ?", (last_seen,session_id,username))
             connection.commit()
             return session_id
         else:

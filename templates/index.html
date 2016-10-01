@@ -1,27 +1,40 @@
-<!DOCTYPE html>
 <html lang="en-US">
-
 <head>
     <meta charset="utf-8"/>
     <title>aelsi.ddns.us</title>
     <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
+
 </head>
 
 <body>
 <div class="flex-container">
+    
+    <!--HEADER-->
     <header>
-        <h1 class="neattitle">Welcome to Amir's experimental website</h1>
+        <h1>{{content['title']}}</h1>
     </header>
+    <!--END HEADER-->
 
+    <!--MAIN-->
     <article class="article">
+        <h2>This is the Main Section</h1>
         <p>Here is a paragraph</p>
         <p>And another</p>
+
+        {% if not content['num_users'] %}
+            <p>No accounts detected. The first account to register gets administrator privileges.</p>
+        {% endif %}
+
         {% if auth %}
             <h2>Welcome {{auth['username']}}, you're logged in!</h2>
-            <p>That is all I have for you now.</p>
+            <p><img src="static/img/genie.gif">That is all I have for you now.<img src="static/img/genie.gif"></p>
         {% endif %}
-    </article>
 
+    </article>
+    <!--END MAIN-->
+    
+    <!--NAV-->
     <nav class="nav">
         {% if auth['rank'] == 'ADMIN' %}
             <a href="/admin">Administration</a> 
@@ -54,12 +67,18 @@
                 <input type="submit" value="Register">
             </form>
         {% endif %}
+
     </nav>
+    <!--END NAV-->
+    
+    <!--FOOTER-->
+    <footer>
+    Server time: {{ content['time'] }}
+    Render time: {{ content['render_time'] }}
+    </footer>
+    <!--END FOOTER-->
+    
 </div>
 </body>
-
-<footer>
-Server time: {{time}}
-</footer>
 
 </html>

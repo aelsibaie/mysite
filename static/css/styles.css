@@ -12,15 +12,34 @@
     flex: 1 100%;
 }
 
+
+
+header {
+    background: black;
+    color:white;
+}
+
+.nav {
+    background: lightgrey;
+    text-align:left;
+    -webkit-flex: 1 auto;
+    flex:1 auto;
+    -webkit-order:1;
+    order:1;
+}
+
 .article {
+    -webkit-flex:5 0px;
+    flex:5 0px;
+    -webkit-order:2;
+    order:2;
     text-align: left;
 }
 
-
-
-header {background: black;color:white;}
-footer {background: #aaa;color:white;}
-
-.nav {text-align:left;-webkit-flex: 1 auto;flex:1 auto;-webkit-order:1;order:1;}
-.article {-webkit-flex:5 0px;flex:5 0px;-webkit-order:2;order:2;}
-footer {-webkit-order:3;order:3;}
+footer {
+    -webkit-order:3;
+    order:3;
+    background: grey;
+    color:white;
+    text-align: right;
+}
