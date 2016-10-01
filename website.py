@@ -34,7 +34,7 @@ def index():
     # Check if there are any users in the DB
     content['num_users'] = sqlite_db.get_num_users()
     
-    auth = check_auth()
+    auth = check_auth(request)
     if auth != False:
         auth_data = None
     else:
@@ -49,7 +49,7 @@ def index():
 def admin():
     render_start = time.clock()
     content = {}
-    auth = check_auth()
+    auth = check_auth(request)
     if auth != False:
         if auth['rank'] == "ADMIN":
             admin_data = {}
@@ -62,7 +62,7 @@ def admin():
 
 @app.route('/logoff', methods=['POST'])
 def logoff():
-    auth = check_auth()
+    auth = check_auth(request)
     if auth != False:
         session.clear()
         sqlite_db.logoff(auth['username'])
@@ -98,7 +98,7 @@ def register():
         return render_template('error.html', problems=problems)
 
 
-def check_auth():
+def check_auth(request):
     if 'username' in session:
         username = session['username']
         id = session['id']
