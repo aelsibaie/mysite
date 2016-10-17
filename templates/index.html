@@ -1,10 +1,11 @@
+<!DOCTYPE html>
 <html lang="en-US">
 <head>
     <meta charset="utf-8"/>
-    <title>aelsi.ddns.us</title>
+    <title>aelsi.net</title>
     <link rel="stylesheet" href="static/css/styles.css">
     <link rel="icon" type="image/png" href="/static/img/favicon.png">
-
+    <script src='https://www.google.com/recaptcha/api.js'></script>
 </head>
 
 <body>
@@ -64,6 +65,7 @@
                 <input type="password" name="password" required><br>
                 Email:
                 <input type="email" name="email" required><br>
+                <div class="g-recaptcha" data-sitekey="6LfoZgkUAAAAAHYX3l_1wqLY-mzWvSjmk4jAxF39" required></div>
                 <input type="submit" value="Register">
             </form>
         {% endif %}

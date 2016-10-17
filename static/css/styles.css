@@ -43,3 +43,7 @@ footer {
     color:white;
     text-align: right;
 }
+
+textarea {
+    resize: none;
+}

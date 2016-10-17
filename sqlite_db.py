@@ -13,6 +13,7 @@ cursor = connection.cursor()
 # Create the DB if it doesn't exist
 cursor.execute('''CREATE TABLE if not exists users (
     username        TEXT        PRIMARY KEY,
+    displayname     TEXT,
     email           TEXT,
     salt            BLOB,
     key             BLOB,
@@ -30,13 +31,13 @@ cursor.execute('''CREATE TABLE if not exists blogs (
     creationtime    DATETIME)''')
 
 
-def check_id(username, id, ip):
+def check_id(username, given_id, ip):
     cursor.execute("SELECT session_id, admin FROM users WHERE username = ?", (username,))
     try:
         db_id, admin = cursor.fetchone()
         if db_id == None:
             return False
-        elif db_id == id:
+        elif db_id == given_id:
             last_seen = time.time()
             cursor.execute("UPDATE users SET last_seen = ?, last_ip = ? WHERE username = ?", (last_seen,ip,username))
             connection.commit()
@@ -48,6 +49,10 @@ def check_id(username, id, ip):
             return False # Bad user ID
     except TypeError:
         return False # Username not found
+
+def post_blog(username, blog_data):
+
+    return True
 
 
 def get_users():
@@ -86,8 +91,7 @@ def register(username, user_email, password):
             key,
             creationtime,
             admin,
-            False)
-        )
+            False))
         connection.commit()
     except sqlite3.IntegrityError as error:
         problems.append("Username already taken")
@@ -97,7 +101,7 @@ def register(username, user_email, password):
 def login(username, password):
     try:
         cursor.execute("SELECT salt, key FROM users WHERE username = ?", (username,))
-        salt, db_key = cursor.fetchone() 
+        salt, db_key = cursor.fetchone()
         user_key = __get_key(password, salt)
         if db_key == user_key:
             last_seen = time.time()

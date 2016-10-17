@@ -1,17 +1,20 @@
 from flask import Flask, render_template, request, make_response, redirect, session
+import sqlite_db
+from datetime import datetime, timedelta
+import time
+from decimal import Decimal
+import requests
+
+
 app = Flask(__name__, static_url_path='/static')
 
 # Change this and keep it secret
 app.secret_key = 'vzHUWR5FZnwMG8wBzFgCGJRTqButzArqFtUbQ5vLsUV5bBf3'
-
-import sqlite_db
-
-from datetime import datetime, timedelta
-import time
-from decimal import Decimal
+recaptcha_secret_key = '6LfoZgkUAAAAAI8gnK6Ii3Pz_vln87HkhI77OS-B'
 
 
 def universal_content(content, start):
+    # Get website title
     content['title'] = "Welcome to Amir's Experimental Website"
     # Get server time
     current_time = datetime.now()
@@ -23,7 +26,7 @@ def universal_content(content, start):
     if render_time <  0.0001:
         render_time = "< 0.10 ms"
     else:
-        render_time = str("{0:.2f}".format((render_time * 1000))) + " ms"     
+        render_time = str("{0:.2f}".format((render_time * 1000))) + " ms"
     content['render_time'] = render_time
     return content
 
@@ -33,15 +36,17 @@ def index():
     content = {}
     # Check if there are any users in the DB
     content['num_users'] = sqlite_db.get_num_users()
-    
+
+    print(request.headers)
+
     auth = check_auth(request)
     if auth != False:
         auth_data = None
     else:
         auth_data = None
-    
+
     content = universal_content(content, render_start)
-    
+
     return render_template('index.html', content=content, auth=auth, auth_data=auth_data)
 
 
@@ -91,11 +96,26 @@ def register():
     username = post_data['username']
     password = str.encode(post_data['password']) # Convert plaintext to bytes
     email = post_data['email']
+    #handle reCAPTCHA verification
+    g_recaptcha_response = post_data['g-recaptcha-response']
+    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data = {'secret':recaptcha_secret_key, 'response':g_recaptcha_response}).json()
+    if response['success'] == False:
+        return render_template('error.html', problems=["reCAPTCHA error"])
     problems = sqlite_db.register(username, email, password)
     if problems == []:
         return render_template('registered.html', username=username, email=email)
     else:
         return render_template('error.html', problems=problems)
+
+
+@app.route('/submit_blog', methods=['POST'])
+def submit_blog():
+    auth = check_auth(request)
+    if auth != False:
+        if auth['rank'] == "ADMIN":
+            blog_data = request.form['blog_data']
+            print(blog_data)
+    return redirect('/')
 
 
 def check_auth(request):
