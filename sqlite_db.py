@@ -6,8 +6,15 @@ import os
 import datetime
 import sqlite3
 
-connection = sqlite3.connect('db.sqlite3', check_same_thread = False)
-#connection = sqlite3.connect(':memory:', check_same_thread = False)
+# TODO: Figure out how to set this as a relative location in Linux as in Windows
+DB_LOCATION = "/var/www/aelsi.net/db.sqlite3"
+BANNED_PWS = "/var/www/aelsi.net/banned_passwords.txt"
+
+if os.name == "nt": # For debugging on Windows
+    DB_LOCATION = "db.sqlite3"
+    BANNED_PWS = "banned_passwords.txt"
+
+connection = sqlite3.connect(DB_LOCATION, check_same_thread = False)
 cursor = connection.cursor()
 
 # Create the DB if it doesn't exist
@@ -126,7 +133,7 @@ def __validate_input(username, user_email, password):
     if username.isalnum() == False:
         problems.append("Username must be alphanumeric")
     # Banned password check
-    with open('banned_passwords.txt', 'r') as file:
+    with open(BANNED_PWS, 'r') as file:
         banned_passwords = file.read()
         if password.decode('utf-8') in banned_passwords:
             problems.append("Password too common")

@@ -36,9 +36,6 @@ def index():
     content = {}
     # Check if there are any users in the DB
     content['num_users'] = sqlite_db.get_num_users()
-
-    print(request.headers)
-
     auth = check_auth(request)
     if auth != False:
         auth_data = None
@@ -114,7 +111,6 @@ def submit_blog():
     if auth != False:
         if auth['rank'] == "ADMIN":
             blog_data = request.form['blog_data']
-            print(blog_data)
     return redirect('/')
 
 
