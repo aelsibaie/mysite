@@ -5,6 +5,11 @@ import time
 from decimal import Decimal
 import requests
 
+#otp qrcode stuff
+import pyotp
+import qrcode # requires pillow
+from io import BytesIO
+import base64
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -60,6 +65,40 @@ def admin():
         admin_data = None
     content = universal_content(content, render_start)
     return render_template('admin.html', content=content, auth=auth, admin_data=admin_data)
+
+@app.route('/test')
+def test():
+    secret = pyotp.random_base32()
+    print(secret)
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri("test TEST test")
+    img = qrcode.make(uri)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    img_str = base64.b64encode(buffer.getvalue()).decode('utf8')
+    return render_template('qrcode.html', img_str=img_str, secret=secret)
+
+@app.route('/setup_otp')
+def setup_otp():
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri("test TEST test")
+    img = qrcode.make(uri)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    img_str = base64.b64encode(buffer.getvalue()).decode('utf8')
+    return render_template('setup_otp.html', img_str=img_str, secret=secret)    
+
+@app.route('/register_otp', methods=['POST'])
+def register_otp():
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri("test TEST test")
+    img = qrcode.make(uri)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    img_str = base64.b64encode(buffer.getvalue()).decode('utf8')
+    return render_template('qrcode.html', img_str=img_str, secret=secret)    
 
 
 @app.route('/logoff', methods=['POST'])

@@ -1,0 +1,10 @@
+<body bgcolor="#E6E6FA">
+{{secret}}
+<br>
+<img src="data:image/png;base64,{{img_str}}"\>
+
+<form action="register_otp" method="post">
+    Enter one time password:
+    <input type="text" name="otp" required><br>
+    <input type="submit" value="Turn on 2 factor auth">
+</form>

@@ -7,8 +7,8 @@ import datetime
 import sqlite3
 
 # TODO: Figure out how to set this as a relative location in Linux as in Windows
-DB_LOCATION = "/var/www/aelsi.net/db.sqlite3"
-BANNED_PWS = "/var/www/aelsi.net/banned_passwords.txt"
+DB_LOCATION = "/var/www/site/db.sqlite3"
+BANNED_PWS = "/var/www/site/banned_passwords.txt"
 
 if os.name == "nt": # For debugging on Windows
     DB_LOCATION = "db.sqlite3"
@@ -24,6 +24,7 @@ cursor.execute('''CREATE TABLE if not exists users (
     email           TEXT,
     salt            BLOB,
     key             BLOB,
+    otpsecret       TEXT,
     session_id      TEXT,
     creationtime    DATETIME,
     last_seen       DATETIME,
